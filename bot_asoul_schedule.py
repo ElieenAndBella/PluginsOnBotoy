@@ -3,6 +3,7 @@
 
 A_soul 日程表
 """
+import os
 import re
 import datetime
 from aiohttp import ClientSession
@@ -12,6 +13,8 @@ from botoy.contrib import get_cache_dir
 from botoy.async_decorators import ignore_botself, equal_content
 
 bst = get_cache_dir("bot_schedule_table")
+schedule_path = bst / "schedule.txt"
+open(schedule_path, "w").close()
 
 
 async def getScheduler() -> str:
@@ -25,13 +28,13 @@ async def getScheduler() -> str:
             receive = await response.text()
             today = str(datetime.date.today())
             re_res = re.findall("日程表.*?img_src.*?(https.*?jpg)", receive)
-            with open(bst / "schedule.txt", "r", encoding="utf-8")as f:
+            with open(schedule_path, "r", encoding="utf-8")as f:
                 content = f.readlines()
                 try:
                     _ = content[-1].strip()
                 except:
                     pass
-            with open(bst / "schedule.txt", "a", encoding="utf-8")as f:
+            with open(schedule_path, "a", encoding="utf-8")as f:
                 # _ = https://i0.hdslb.com/bfs/album/6bd363cb04051f8292910f6a7c26fd71375b3204.jpg 2022-01-06
                 if not re_res:
                     print(__file__, "没有日程表，采取缓存")
