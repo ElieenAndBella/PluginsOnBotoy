@@ -34,10 +34,10 @@ def read_last_txt():
 
 
 async def get_picORpics(respJson) -> list:
-    '''
+    """
     获取日程表图片链接
     :return: 日程表图片列表
-    '''
+    """
     _cards = jsonpath.jsonpath(respJson, "$..cards")[0]
     for _card in _cards:
         _card = jsonpath.jsonpath(_card, "$..card")[0]

@@ -1,3 +1,4 @@
+"""BiliBili视频解析，关爱电脑党"""
 import httpx
 import time
 import re
@@ -14,7 +15,6 @@ def get_online_num(bvid: str, cid: str) -> str:
 
 def get_bvid(url: str) -> str:
     resp = httpx.get(url, allow_redirects=False)
-    print(resp.headers)
     bvid = re.match(".*/video/(.*)\?.*", resp.text)
     return bvid.group(1)
 
@@ -46,22 +46,39 @@ def get_bili_video_detail(bvid: str):
 弹幕数：{danmaku}
 评论数：{reply}
 分享数：{share}
-在线观看人数：{online}"""
+在线观看人数：{online}
+链接：https://www.bilibili.com/video/{bvid}"""
 
     return cover, text
 
 
-def bili_video_parse(ctx):
+def bili_video_parse_by_xml(ctx):
+    if ctx.MsgType != "XmlMsg":
+        return
     short = re.match(".*url=.*?\"(.*)\?.*", eval(ctx.Content)["Content"]).group(1)
     if short:
         cover, text = get_bili_video_detail(get_bvid(short))
 
         Action().sendGroupPic(ctx.FromGroupId, picUrl=cover, content=text)
+        return
     else:
         return
 
 
+def bili_video_parse_by_url(ctx):
+    if ctx.MsgType == "XmlMsg":
+        return
+    if (temp := re.match(".*(http[s]?://[w]{0,3}\.?b23.tv/\w+)\s*", ctx.Content)) != None:
+        cover, text = get_bili_video_detail(get_bvid(temp.group(1)))
+        Action().sendGroupPic(ctx.FromGroupId, picUrl=cover, content=text)
+        return
+    if (temp := re.match(".*http[s]?://[w]{0,3}\.?bilibili.com/video/(\w+)\s*", ctx.Content)) != None:
+        cover, text = get_bili_video_detail(temp.group(1))
+        Action().sendGroupPic(ctx.FromGroupId, picUrl=cover, content=text)
+        return
+
+
 @ignore_botself
-@these_msgtypes("XmlMsg")
 def receive_group_msg(ctx: GroupMsg):
-    bili_video_parse(ctx)
+    bili_video_parse_by_xml(ctx)
+    bili_video_parse_by_url(ctx)
