@@ -4,7 +4,7 @@ import time
 import re
 
 from botoy import Action, GroupMsg
-from botoy.decorators import ignore_botself, these_msgtypes
+from botoy.decorators import ignore_botself
 
 
 def get_online_num(bvid: str, cid: str) -> str:
@@ -58,7 +58,6 @@ def bili_video_parse_by_xml(ctx):
     short = re.match(".*url=.*?\"(.*)\?.*", eval(ctx.Content)["Content"]).group(1)
     if short:
         cover, text = get_bili_video_detail(get_bvid(short))
-
         Action().sendGroupPic(ctx.FromGroupId, picUrl=cover, content=text)
         return
     else:
@@ -78,7 +77,17 @@ def bili_video_parse_by_url(ctx):
         return
 
 
+def bili_video_parse_by_bv(ctx):
+    if ctx.MsgType == "XmlMsg":
+        return
+    if (temp := re.match(".*(^(BV)[a-zA-Z0-9]+$\s*)", ctx.Content)) != None:
+        cover, text = get_bili_video_detail(temp.group(1))
+        Action().sendGroupPic(ctx.FromGroupId, picUrl=cover, content=text)
+        return
+
+
 @ignore_botself
 def receive_group_msg(ctx: GroupMsg):
     bili_video_parse_by_xml(ctx)
     bili_video_parse_by_url(ctx)
+    bili_video_parse_by_bv(ctx)
